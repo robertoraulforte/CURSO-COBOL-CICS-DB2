@@ -1,0 +1,101 @@
+      * PROGRAMA PARA HACER MATCHING DE ARCHIVOS
+       IDENTIFICATION DIVISION.
+       PROGRAM-ID. PRUEBA8.
+
+       ENVIRONMENT DIVISION.
+       INPUT-OUTPUT SECTION.
+       FILE-CONTROL.
+            SELECT FICHERO-EN1 ASSIGN TO ENTRADA
+            ORGANIZATION IS SEQUENTIAL
+            ACCESS IS SEQUENTIAL
+            FILE STATUS IS FS-ENTRADA1.
+            SELECT FICHERO-EN2 ASSIGN TO ENTRADA
+            ORGANIZATION IS SEQUENTIAL
+            ACCESS IS SEQUENTIAL
+            FILE STATUS IS FS-ENTRADA2.
+
+            SELECT FICHERO-SAL ASSIGN TO SALIDA
+            ORGANIZATION IS SEQUENTIAL
+            ACCESS IS SEQUENTIAL
+            FILE STATUS IS FS-SALIDA.
+
+       DATA DIVISION.
+       FILE SECTION.
+       FD FICHERO-EN1 RECORDING MODE IS F
+                      DATA RECORD IS REG-ENTRADA1.
+
+       01 REG-ENTRADA1.
+          05 EN1-NUMERO         PIC 99.
+          05 EN1-TEXTO          PIC X(48).
+
+       FD FICHERO-EN2 RECORDING MODE IS F
+                      DATA RECORD IS REG-ENTRADA2.
+
+       01 REG-ENTRADA2.
+          05 EN2-NUMERO         PIC 99.
+          05 EN2-TEXTO          PIC X(48).
+
+       FD FICHERO-SAL RECORDING MODE IS F
+                      DATA RECORD IS REG-SALIDA.
+
+       01 REG-SALIDA.
+          05 SAL-FILA           PIC ZZZZ9.
+          05 SAL-NUMERO         PIC 99.
+          05 SAL-TEXTO1         PIC X(48).
+          05 SAL-TEXTO2         PIC X(48).
+
+       WORKING-STORAGE SECTION.
+       01 FS-ENTRADA1           PIC 99.
+          88 FS-ENTRADA1-OK          VALUE 00.
+          88 FS-ENTRADA1-FIN         VALUE 10.
+       01 FS-ENTRADA2           PIC 99.
+          88 FS-ENTRADA2-OK          VALUE 00.
+          88 FS-ENTRADA2-FIN         VALUE 10.
+
+       01 FS-SALIDA             PIC 99.
+
+       01 CONTADOR-SAL          PIC 99999.
+
+       PROCEDURE DIVISION.
+            PERFORM 1000-INICIO.
+            PERFORM 2000-PROCESO UNTIL FS-ENTRADA1-FIN OR
+                                       FS-ENTRADA2-FIN
+            PERFORM 3000-FIN.
+
+       1000-INICIO.
+            OPEN INPUT FICHERO-EN1.
+            OPEN INPUT FICHERO-EN2.
+            OPEN OUTPUT FICHERO-SAL.
+            MOVE 0                TO CONTADOR-SAL.
+            READ FICHERO-EN1.
+            READ FICHERO-EN2.
+
+       2000-PROCESO.
+
+            IF EN1-NUMERO = EN2-NUMERO
+               ADD 1              TO CONTADOR-SAL
+               MOVE CONTADOR-SAL  TO SAL-FILA
+               MOVE EN1-NUMERO    TO SAL-NUMERO
+               MOVE EN1-TEXTO     TO SAL-TEXTO1
+               MOVE EN2-TEXTO     TO SAL-TEXTO2
+               WRITE REG-SALIDA
+               READ FICHERO-EN1
+                   AT END SET FS-ENTRADA1-FIN TO TRUE.
+               READ FICHERO-EN2
+                   AT END SET FS-ENTRADA2-FIN TO TRUE.
+            ELSE
+               IF EN1-NUMERO > EN2-NUMERO
+                  READ FICHERO-EN2
+               ELSE
+                  READ FICHERO-EN1
+               END-IF
+             END-IF.
+
+       3000-FIN.
+            CLOSE FICHERO-EN1.
+            CLOSE FICHERO-EN2.
+            CLOSE FICHERO-SAL.
+            DISPLAY 'REGISTROS COINCIDENTES'.
+            DISPLAY CONTADOR-SAL.
+            STOP RUN.
+

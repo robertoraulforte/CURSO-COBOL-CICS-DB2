@@ -1,0 +1,80 @@
+      * PROGRAMA QUE LEE ARCHIVO Y ESCRIBE EN ARCHIVO SALIDA VAR
+       IDENTIFICATION DIVISION.
+       PROGRAM-ID. PRUEBA10.
+
+       ENVIRONMENT DIVISION.
+       INPUT-OUTPUT SECTION.
+       FILE-CONTROL.
+            SELECT FICHERO-ENT ASSIGN TO V
+            ORGANIZATION IS SEQUENTIAL
+            ACCESS IS SEQUENTIAL
+            FILE STATUS IS FS-ENTRADA.
+
+            SELECT FICHERO-SAL ASSIGN TO F
+            FILE STATUS IS FS-SALIDA.
+
+       DATA DIVISION.
+       FILE SECTION.
+       FD FICHERO-ENT RECORDING MODE IS F
+                      DATA RECORD IS REG-ENTRADA.
+
+       01 REG-ENTRADA.
+          05 REG-ENTRADA-NUM    PIC 99.
+          05 REG-ENTRADA-TXT    PIC X(18).
+
+       FD FICHERO-SAL RECORDING MODE IS V
+                      RECORD IS VARYING IN SIZE FROM 2 TO 102 CHARACTERS
+                      DEPENDING ON WS-SALIDA-LEN
+                      DATA RECORD IS REG-SALIDA.
+
+       01 REG-SALIDA            PIC X(102).
+
+
+       WORKING-STORAGE SECTION.
+       01 FS-ENTRADA            PIC 99.
+          88 FS-ENTRADA-OK           VALUE 00.
+          88 FS-ENTRADA-FIN          VALUE 10.
+
+       01 FS-SALIDA             PIC 99.
+
+       01 WS-SALIDA-LEN         PIC 999.
+
+       01 WS-SALIDA.
+          05 WS-SALIDA-NUM           PIC 99.
+          05 WS-SALIDA-TXT           PIC X(10) OCCURS 10 TIMES.
+
+       01 I                     PIC 99.
+
+       PROCEDURE DIVISION.
+            PERFORM 1000-INICIO.
+            PERFORM 2000-PROCESO UNTIL FS-ENTRADA-FIN.
+            PERFORM 3000-FIN.
+
+       1000-INICIO.
+            OPEN INPUT FICHERO-ENT.
+            OPEN OUTPUT FICHERO-SAL.
+            READ FICHERO-ENT.
+
+       2000-PROCESO.
+            INITIALIZE WS-SALIDA.
+
+            MOVE REG-ENTRADA-NUM   TO WS-SALIDA-NUM.
+
+            PERFORM VARYING I FROM 1 BY 1 UNTIL I > REG-ENTRADA-NUM
+                MOVE REG-ENTRADA-TXT TO WS-SALIDA-TXT(I)
+            END-PERFORM.
+
+            MOVE WS-SALIDA        TO REG-SALIDA.
+
+            COMPUTE
+                WS-SALIDA-LEN = 2 + REG-ENTRADA-NUM * 10
+            END-COMPUTE.
+
+            WRITE REG-SALIDA.
+            READ FICHERO-ENT.
+
+       3000-FIN.
+            CLOSE FICHERO-ENT.
+            CLOSE FICHERO-SAL.
+            STOP RUN.
+

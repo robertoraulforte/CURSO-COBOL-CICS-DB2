@@ -1,0 +1,95 @@
+      * PROGRAMA DE MODIFICACION DE REGISTROS
+       IDENTIFICATION DIVISION.
+       PROGRAM-ID. PRUEBA12.
+
+       ENVIRONMENT DIVISION.
+       INPUT-OUTPUT SECTION.
+       FILE-CONTROL.
+            SELECT FICHERO-ENT ASSIGN TO ENTRADA
+            ORGANIZATION IS SEQUENTIAL
+            ACCESS IS SEQUENTIAL
+            FILE STATUS IS FS-ENTRADA.
+
+            SELECT FICHERO-SAL ASSIGN TO SALIDA
+            ORGANIZATION IS INDEXED
+            ACCESS IS RANDOM
+            RECORD KEY IS REG-SALIDA-CLAVE
+            FILE STATUS IS FS-SALIDA.
+
+            SELECT FICHERO-ERR ASSIGN TO ERRORES
+            ORGANIZATION IS SEQUENTIAL
+            ACCESS IS SEQUENTIAL
+            FILE STATUS IS FS-ERRORES.
+
+       DATA DIVISION.
+       FILE SECTION.
+       FD FICHERO-ENT RECORDING MODE IS F
+                      DATA RECORD IS REG-ENTRADA.
+
+       01 REG-ENTRADA.
+          05 REG-ENTRADA-CLAVE  PIC XXXX.
+          05 REG-ENTRADA-TEXTO  PIC X(50).
+
+       FD FICHERO-SAL DATA RECORD IS REG-SALIDA.
+
+       01 REG-SALIDA.
+          05 REG-SALIDA-CLAVE   PIC XXXX.
+          05 REG-SALIDA-TEXTO   PIC X(50).
+
+       FD FICHERO-ERR RECORDING MODE IS F
+                      DATA RECORD IS REG-ERRORES.
+
+       01 REG-ERRORES           PIC X(100).
+
+       WORKING-STORAGE SECTION.
+       01 FS-ENTRADA            PIC 99.
+          88 FS-ENTRADA-OK           VALUE 00.
+          88 FS-ENTRADA-FIN          VALUE 10.
+
+       01 FS-SALIDA             PIC 99.
+          88 FS-SALIDA-NO-EXISTE     VALUE 23.
+
+       01 FS-ERRORES            PIC 99.
+
+       01 WS-ERRORES.
+          05 WS-E-OPERACION     PIC X.
+          05 WS-E-CLAVE         PIC XXXX.
+          05 WS-E-TEXTO         PIC X(95).
+
+       PROCEDURE DIVISION.
+
+            PERFORM 1000-INICIO.
+            PERFORM 2000-PROCESO UNTIL FS-ENTRADA-FIN.
+            PERFORM 3000-FIN.
+
+       1000-INICIO.
+            OPEN INPUT FICHERO-ENT.
+            OPEN I-O FICHERO-SAL.
+            OPEN EXTEND FICHERO-ERR.
+            READ FICHERO-ENT.
+
+       2000-PROCESO.
+
+            MOVE REG-ENTRADA             TO REG-SALIDA.
+
+            READ FICHERO-SAL.
+
+            IF FS-SALIDA-NO-EXISTE
+               MOVE 'M'                  TO WS-E-OPERACION
+               MOVE REG-ENTRADA-CLAVE    TO WS-E-CLAVE
+               MOVE 'EL REGISTRO QUE INTENTA REESCRIBIR NO EXISTE'
+                                         TO WS-E-TEXTO
+               WRITE REG-ERRORES FROM WS-ERRORES
+            ELSE
+               MOVE REG-ENTRADA          TO REG-SALIDA
+               REWRITE REG-SALIDA
+            END-IF.
+
+            READ FICHERO-ENT.
+
+       3000-FIN.
+            CLOSE FICHERO-ENT.
+            CLOSE FICHERO-SAL.
+            CLOSE FICHERO-ERR.
+            STOP RUN.
+

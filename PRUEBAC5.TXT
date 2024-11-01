@@ -1,0 +1,81 @@
+      * PROGRAMA CICS : BUSCAMOS DATOS EN TABLA DB2
+       IDENTIFICATION DIVISION.
+       PROGRAM-ID. PRUEBAC5.
+
+       ENVIRONMENT DIVISION.
+       INPUT-OUTPUT SECTION.
+
+       DATA DIVISION.
+       WORKING-STORAGE SECTION.
+
+       01 WS-ENTRADA.
+          05 FILLER             PIC X(4).
+          05 E-CLAVE-CONTRATO   PIC S9(9).
+
+       01 WS-SALIDA.
+          05 WS-CLAVE           PIC 9(9).
+          05 FILLER             PIC X            VALUE '-'.
+          05 WS-DESCRIPCION     PIC X(50).
+          05 FILLER             PIC X            VALUE '-'.
+          05 WS-IMPORTE         PIC 9(11)V9(2).
+          05 FILLER             PIC X            VALUE '-'.
+          05 WS-ESTADO          PIC X.
+
+      * SQLCA Y DCLGEN DE LA TABLA
+            EXEC SQL INCLUDE SQLCA END-EXEC.
+            EXEC SQL INCLUDE CONTRATO END-EXEC.
+
+       PROCEDURE DIVISION.
+            PERFORM 1000-INICIO.
+            PERFORM 2000-PROCESO.
+            PERFORM 3000-FIN.
+
+       1000-INICIO.
+      * INICIALIZAMOS LA VARIABLE DE LONGITUD DE ENTRADA Y SALIDA
+            INITIALIZE              WS-ENTRADA.
+                                    WS-SALIDA.
+
+            EXEC CICS RECEIVE
+               INTO (WS-ENTRADA)
+               LENGHT(LENGHT OF WS-ENTRADA)
+            END-EXEC.
+
+       2000-PROCESO.
+      * REALIZAMOS LA BUSQUEDA
+            MOVE E-CLAVE-CONTRATO  TO CLAVE-CONTRATO
+
+            EXEC SQL
+                 SELECT CLAVE-CONTRATO,
+                        DESCRIPCION,
+                        IMPORTE,
+                        ESTADO
+                  INTO :CLAVE-CONTRATO,
+                       :DESCRIPCION,
+                       :IMPORTE,
+                       :ESTADO
+                  FROM PRB.CONTRATOS
+                WHERE CLAVE_CONTRATO = :CLAVE-CONTRATO
+            END-EXEC.
+
+            IF SQLCODE NOT = 0
+               MOVE SQLCODE                     TO WS-CLAVE
+               MOVE 'ERROR AL BUSCAR CONTRATO'  TO WS-DESCRIPCION
+            ELSE
+      * MOVEMOS LA ENTRADA A LA SALIDA
+               MOVE CLAVE-CONTRATO     TO WS-CLAVE
+               MOVE DESCRIPCION        TO WS-DESCRIPCION
+               MOVE IMPORTE            TO WS-IMPORTE
+               MOVE ESTADO             TO WS-ESATDO
+            END-IF.
+
+      * ENVIAMOS LA VARIABLE AL CICS
+           EXEC CICS SEND
+             FROM (WS-SALIDA)
+             LENGTH(LENGHT OF WS-SALIDA)
+             ERASE
+           END-EXEC.
+
+       3000-FIN.
+      * DEVOLVEMOS EL CONTROL AL CICS
+           EXEC CICS RETURN END-EXEC.
+

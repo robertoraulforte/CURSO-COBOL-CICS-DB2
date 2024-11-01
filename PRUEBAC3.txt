@@ -1,0 +1,58 @@
+      * PROGRAMA CICS2 : IDEM PRUEBAC2 PERO CON UNA OP MATEMATICA
+       IDENTIFICATION DIVISION.
+       PROGRAM-ID. PRUEBAC3.
+
+       ENVIRONMENT DIVISION.
+       INPUT-OUTPUT SECTION.
+
+       DATA DIVISION.
+       WORKING-STORAGE SECTION.
+
+       01 WS-ENTRADA.
+      * EN EL FILLER RECIBE EL CODIGO DE TRANSACCION Y LAS COORDENADAS
+      * DEL TEXTO
+          05 FILLER              PIC X(4).
+          05 WS-OP1-E            PIC 9(3).
+          05 FILLER              PIC X.
+          05 WS-OP2-E            PIC 9(3).
+
+       01 WS-SALIDA.
+          05  WS-TEXTO           PIC X(8).
+          05  WS-MENSAJE-S       PIC X(70).
+
+       01 WS-RESULTADO           PIC 9(4).
+
+       PROCEDURE DIVISION.
+            PERFORM 1000-INICIO.
+            PERFORM 2000-PROCESO.
+            PERFORM 3000-FIN.
+
+       1000-INICIO.
+      * INICIALIZAMOS LA VARIABLE DE LONGITUD DE ENTRADA Y SALIDA
+            INITIALIZE              WS-ENTRADA.
+                                    WS-SALIDA.
+
+            EXEC CICS RECEIVE
+               INTO (WS-ENTRADA)
+               LENGHT(LENGHT OF WS-ENTRADA)
+            END-EXEC.
+
+       2000-PROCESO.
+      * REALIZAMOS EL CALCULO
+            COMPUTE WS-RESULTADO = WS-OP1-E + WS-OP2-E.
+
+      * MOVEMOS LA ENTRADA A LA SALIDA
+            MOVE WS-RESULTADO   TO WS-MENSAJE-S.
+            MOVE 'SALIDA :'     TO WS-TEXTO.
+
+      * ENVIAMOS LA VARIABLE AL CICS
+           EXEC CICS SEND
+             FROM (WS-SALIDA)
+             LENGTH(LENGHT OF WS-SALIDA)
+             ERASE
+           END-EXEC.
+
+       3000-FIN.
+      * DEVOLVEMOS EL CONTROL AL CICS
+           EXEC CICS RETURN END-EXEC.
+

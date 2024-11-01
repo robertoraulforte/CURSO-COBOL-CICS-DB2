@@ -1,0 +1,84 @@
+      * PROGRAMA CICS : INSERTAMOS DATOS A TABLA DB2
+       IDENTIFICATION DIVISION.
+       PROGRAM-ID. PRUEBAC4.
+
+       ENVIRONMENT DIVISION.
+       INPUT-OUTPUT SECTION.
+
+       DATA DIVISION.
+       WORKING-STORAGE SECTION.
+
+       01 WS-ENTRADA.
+      * EN EL FILLER RECIBE EL CODIGO DE TRANSACCION Y LAS COORDENADAS
+      * DEL TEXTO
+          05 FILLER                PIC X(4).
+          05 E-CLAVE-CONTRATO      PIC S9(9).
+          05 FILLER                PIC X.
+          05 E-DESCRIPCION         PIC X(50).
+          05 FILLER                PIC X.
+          05 E-IMPORTE             PIC S9(11)V9(2).
+          05 FILLER                PIC X.
+          05 E-ESTADO              PIC X(1).
+
+       01 WS-SALIDA.
+          05  WS-TEXTO           PIC X(8).
+          05  WS-MENSAJE-S       PIC X(70).
+
+       01 WS-RESULTADO           PIC 9(4).
+
+      * SQLCA Y DCLGEN DE LA TABLA
+            EXEC SQL INCLUDE SQLCA END-EXEC.
+            EXEC SQL INCLUDE CONTRATO END-EXEC.
+
+       PROCEDURE DIVISION.
+            PERFORM 1000-INICIO.
+            PERFORM 2000-PROCESO.
+            PERFORM 3000-FIN.
+
+       1000-INICIO.
+      * INICIALIZAMOS LA VARIABLE DE LONGITUD DE ENTRADA Y SALIDA
+            INITIALIZE              WS-ENTRADA.
+                                    WS-SALIDA.
+
+            EXEC CICS RECEIVE
+               INTO (WS-ENTRADA)
+               LENGHT(LENGHT OF WS-ENTRADA)
+            END-EXEC.
+
+       2000-PROCESO.
+      * REALIZAMOS EL INSERT
+            MOVE E-CLAVE-CONTRATO  TO CLAVE-CONTRATO
+            MOVE E-DESCRIPCION     TO DESCRIPCION
+            MOVE E-IMPORTE         TO IMPORTE
+            MOVE E-ESTADO          TO ESTADO
+
+            EXEC SQL
+                INSERT INTO PRB.CONTRATOS
+                       (CLAVE-CONTRATO,
+                        DESCRIPCION,
+                        IMPORTE,
+                        ESTADO)
+                VALUES (:CLAVE-CONTRATO,
+                        :DESCRIPCION,
+                        :IMPORTE,
+                        :ESTADO)
+            END-EXEC.
+
+            IF SQLCODE NOT = 0
+               MOVE SQLCODE            TO WS-MENSAJE-S.
+            END-IF.
+
+      * MOVEMOS LA ENTRADA A LA SALIDA
+            MOVE 'SALIDA :'     TO WS-TEXTO.
+
+      * ENVIAMOS LA VARIABLE AL CICS
+           EXEC CICS SEND
+             FROM (WS-SALIDA)
+             LENGTH(LENGHT OF WS-SALIDA)
+             ERASE
+           END-EXEC.
+
+       3000-FIN.
+      * DEVOLVEMOS EL CONTROL AL CICS
+           EXEC CICS RETURN END-EXEC.
+

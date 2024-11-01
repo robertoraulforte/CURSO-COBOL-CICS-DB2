@@ -1,0 +1,38 @@
+      * PROGRAMA COBOL QUE LANZA UN MAPA BMS
+       IDENTIFICATION DIVISION.
+       PROGRAM-ID. PRUEBAC6.
+       ENVIRONMENT DIVISION.
+      *
+       CONFIGURATION SECTION.
+       INPUT-OUTPUT SECTION.
+      *
+       DATA DIVISION.
+       WORKING-STORAGE SECTION.
+      *
+       COPY MAPA01CP.
+      *01  MAPA01I.
+      *    02   FILLER   PIC X(12).
+      *01  MAPA01O REDEFINES MAPA01I.
+      *    02   FILLER   PIC X(12).
+      *
+       PROCEDURE DIVISION.
+           PERFORM 1000-INICIO.
+           PERFORM 2000-PROCESO.
+           PERFORM 3000-FIN.
+
+       1000-INICIO.
+
+       2000-PROCESO.
+      * ENVIAMOS LA VARIABLE AL CICS
+           EXEC CICS SEND
+              MAP ('MAPA01')
+              MAPONLY
+              ERASE
+              NOHANDLE
+           END-EXEC.
+
+       3000-FIN.
+      * DEVOLVEMOS EL CONTROL AL CICS
+           EXEC CICS RETURN END-EXEC.
+           STOP RUN.
+
